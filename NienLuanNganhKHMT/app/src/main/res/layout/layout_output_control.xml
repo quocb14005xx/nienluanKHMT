@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:orientation="horizontal"
+    android:layout_gravity="bottom"
+    android:gravity="right"
+    android:layout_margin="5dp"
+    android:layout_height="wrap_content">
+    <ImageButton
+        android:id="@+id/btnHearingOutput"
+        android:src="@drawable/ic_hearing"
+        android:layout_margin="5dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <ImageButton
+        android:id="@+id/btnCopy"
+        android:layout_margin="5dp"
+        android:src="@drawable/ic_copy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</LinearLayout>
