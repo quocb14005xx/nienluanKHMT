@@ -1,4 +1,4 @@
-package nienluannganh.quocb14005xx.nienluannganhkhmt;
+package nienluannganh.quocb14005xx.nienluannganhkhmt.activity;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Locale;
+
+import nienluannganh.quocb14005xx.nienluannganhkhmt.R;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextToSpeech.OnInitListener {
     private final int REQ_CODE_SPEECH_INPUT = 100;
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void init() {
+
         //anh xa view
         spFrom = findViewById(R.id.spinerFrom);
         spTo = findViewById(R.id.spinerTo);
@@ -136,12 +139,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 speakOut();
                 break;
             case R.id.btnTranslate:
-
+                Toast.makeText(this, edtInput.getText().toString(), Toast.LENGTH_SHORT).show();
                 break;
         }
     }
 
-    //show dialog voice
+
+
+    //show dialog voice và intent đến action của reconizer
     private void promptSpeechInput() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -156,7 +161,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.LENGTH_SHORT).show();
         }
     }
-
+    /**
+     * onActivityResult
+     * callback trả về sau sau khi intent gọi speech regconizer của hệ thống android
+     * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -187,6 +195,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    /**
+     * 3 hàm onInit,speakOut , vòng đời onDestroy dành cho text to speech
+     *
+     * onInit : khởi tạo speech to text cho quá trình phát âm thanh
+     * speakOut : nhận text input và phát âm thanh sau khi onInit thành công
+     * onDestroy : activity sẽ bị destroy và sẽ hủy lươn tiến trình của text to speech
+     * */
     //init text to speech
     @Override
     public void onInit(int status) {
@@ -208,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     //speak text from input
-
     private void speakOut() {
         String text = edtInput.getText().toString();
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
