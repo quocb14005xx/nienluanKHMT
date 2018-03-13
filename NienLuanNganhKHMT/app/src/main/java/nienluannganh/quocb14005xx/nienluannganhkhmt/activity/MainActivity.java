@@ -1,8 +1,10 @@
 package nienluannganh.quocb14005xx.nienluannganhkhmt.activity;
 
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
@@ -16,10 +18,24 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.cloud.speech.v1.RecognitionAudio;
+import com.google.cloud.speech.v1.RecognitionConfig;
+import com.google.cloud.speech.v1.RecognizeResponse;
+import com.google.cloud.speech.v1.SpeechClient;
+import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
+import com.google.cloud.speech.v1.SpeechRecognitionResult;
+import com.google.protobuf.ByteString;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import nienluannganh.quocb14005xx.nienluannganhkhmt.R;
+import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.MyConstants;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextToSpeech.OnInitListener {
     private final int REQ_CODE_SPEECH_INPUT = 100;
@@ -94,46 +110,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnRecord:
                 promptSpeechInput();
 
-                /*try{
-                    SpeechClient speech = SpeechClient.create();
+//                try {
+//                    syncRecognizeFile(MyConstants.LINK_TEST_LOCAL_FILE);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
 
-                    // The path to the audio file to transcribe
-                    String fileName = "/storage/emulated/0/Sounds/quoc.m4a";
-
-                    // Reads the audio file into memory
-                    @SuppressLint({"NewApi", "LocalSuppress"}) Path path = Paths.get(fileName);
-                    @SuppressLint({"NewApi", "LocalSuppress"}) byte[] data = Files.readAllBytes(path);
-                    ByteString audioBytes = ByteString.copyFrom(data);
-
-                    // Builds the sync recognize request
-                    RecognitionConfig config = RecognitionConfig.newBuilder()
-                            .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                            .setSampleRateHertz(16000)
-                            .setLanguageCode("en-US")
-                            .build();
-                    RecognitionAudio audio = RecognitionAudio.newBuilder()
-                            .setContent(audioBytes)
-                            .build();
-
-                    // Performs speech recognition on the audio file
-                    RecognizeResponse response = speech.recognize(config, audio);
-                    List<SpeechRecognitionResult> results = response.getResultsList();
-
-                    for (SpeechRecognitionResult result: results) {
-                        // There can be several alternative transcripts for a given chunk of speech. Just use the
-                        // first (most likely) one here.
-                        SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-                        Log.e(MyConstants.LOG, "Transciption :" +alternative.getTranscript());
-                    }
-                    speech.close();
-
-                }catch (IOException e)
-                {
-                    e.printStackTrace();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-*/
                 break;
             case R.id.btnHearingInput:
                 speakOut();
@@ -144,6 +126,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
+    public static void syncRecognizeFile(String fileName) throws Exception, IOException {
+        //xac thuc tai đây
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        SpeechClient speech = SpeechClient.create();
+
+        @SuppressLint({"NewApi", "LocalSuppress"}) Path path = Paths.get(fileName);
+        @SuppressLint({"NewApi", "LocalSuppress"}) byte[] data = Files.readAllBytes(path);
+        ByteString audioBytes = ByteString.copyFrom(data);
+
+        // Configure request with local raw PCM audio
+        RecognitionConfig config = RecognitionConfig.newBuilder()
+                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                .setLanguageCode("en-US")
+                .setSampleRateHertz(16000)
+                .build();
+        RecognitionAudio audio = RecognitionAudio.newBuilder()
+                .setContent(audioBytes)
+                .build();
+        // Use blocking call to get audio transcript
+        RecognizeResponse response = speech.recognize(config, audio);
+        List<SpeechRecognitionResult> results = response.getResultsList();
+
+        for (SpeechRecognitionResult result: results) {
+            // There can be several alternative transcripts for a given chunk of speech. Just use the
+            // first (most likely) one here.
+            SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
+            System.out.printf("Transcription: %s%n", alternative.getTranscript());
+        }
+        speech.close();
+    }
 
 
     //show dialog voice và intent đến action của reconizer
@@ -168,18 +182,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        //buoc3 :test sound
-//            MediaPlayer player = new MediaPlayer();
-//            try {
-//                player.setDataSource(this, soundUri);
-//                player.prepare();
-//                player.start();
-//
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
         switch (requestCode) {
             case REQ_CODE_SPEECH_INPUT: {
                 if (resultCode == RESULT_OK && null != data) {
@@ -190,7 +192,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             }
-
         }
     }
 
