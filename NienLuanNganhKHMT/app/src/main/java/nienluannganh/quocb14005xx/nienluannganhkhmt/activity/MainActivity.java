@@ -1,8 +1,10 @@
 package nienluannganh.quocb14005xx.nienluannganhkhmt.activity;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.speech.RecognizerIntent;
@@ -18,15 +20,19 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1.RecognitionAudio;
 import com.google.cloud.speech.v1.RecognitionConfig;
 import com.google.cloud.speech.v1.RecognizeResponse;
 import com.google.cloud.speech.v1.SpeechClient;
 import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1.SpeechRecognitionResult;
+import com.google.cloud.speech.v1.SpeechSettings;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,10 +42,13 @@ import java.util.Locale;
 
 import nienluannganh.quocb14005xx.nienluannganhkhmt.R;
 import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.MyConstants;
+import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.Translator;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextToSpeech.OnInitListener {
     private final int REQ_CODE_SPEECH_INPUT = 100;
-    String base64EncodedData;
+    private static int SPIN1_SPIN2 = 9999;
+
+
     private Spinner spFrom, spTo;//spiner
     private ImageButton btnSwitch, btnHearingInput, btnRecord, btnHearingOutput, btnCopy;
     private Button btnTranslate;
@@ -47,10 +56,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView txtOutput;
     private ArrayList<String> listLanguage;
     private TextToSpeech tts;
+    private Translator translator;
+    private ProgressDialog progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         setContentView(R.layout.activity_main);
         init();
         events();
@@ -61,10 +74,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRecord.setOnClickListener(this);
         btnHearingInput.setOnClickListener(this);
         btnTranslate.setOnClickListener(this);
+
     }
 
     private void init() {
-
         //anh xa view
         spFrom = findViewById(R.id.spinerFrom);
         spTo = findViewById(R.id.spinerTo);
@@ -92,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         spTo.setSelection(listLanguage.size() - 1);
 
     }
+
 
     @Override
     public void onClick(View v) {
@@ -121,17 +135,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 speakOut();
                 break;
             case R.id.btnTranslate:
-                Toast.makeText(this, edtInput.getText().toString(), Toast.LENGTH_SHORT).show();
+                new TranslatorTask().execute();
                 break;
         }
     }
 
 
-    public static void syncRecognizeFile(String fileName) throws Exception, IOException {
+    public void syncRecognizeFile(String fileName) throws Exception, IOException {
+
+        InputStream resourceAsStream = getResources().openRawResource(R.raw.nienluannganh);
+//        FileInputStream credentialsStream = new FileInputStream("nienluanthnhi-427eee155b1a.json");
+        GoogleCredentials credentials = GoogleCredentials.fromStream(resourceAsStream);
+        FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+        SpeechSettings speechSettings =
+                SpeechSettings.newBuilder()
+                        .setCredentialsProvider(credentialsProvider)
+                        .build();
+
         //xac thuc tai đây
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        SpeechClient speech = SpeechClient.create();
+        SpeechClient speech = SpeechClient.create(speechSettings);
 
         @SuppressLint({"NewApi", "LocalSuppress"}) Path path = Paths.get(fileName);
         @SuppressLint({"NewApi", "LocalSuppress"}) byte[] data = Files.readAllBytes(path);
@@ -150,11 +174,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         RecognizeResponse response = speech.recognize(config, audio);
         List<SpeechRecognitionResult> results = response.getResultsList();
 
-        for (SpeechRecognitionResult result: results) {
+        for (SpeechRecognitionResult result : results) {
             // There can be several alternative transcripts for a given chunk of speech. Just use the
             // first (most likely) one here.
             SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-            System.out.printf("Transcription: %s%n", alternative.getTranscript());
+            Log.e(MyConstants.LOG, alternative.getTranscript());
         }
         speech.close();
     }
@@ -164,8 +188,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void promptSpeechInput() {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH);
+                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
+//        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US);
         intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói gì đó đi");
         try {
             startActivityForResult(intent, REQ_CODE_SPEECH_INPUT);
@@ -175,10 +199,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.LENGTH_SHORT).show();
         }
     }
+
     /**
      * onActivityResult
      * callback trả về sau sau khi intent gọi speech regconizer của hệ thống android
-     * */
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -198,11 +223,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     /**
      * 3 hàm onInit,speakOut , vòng đời onDestroy dành cho text to speech
-     *
+     * <p>
      * onInit : khởi tạo speech to text cho quá trình phát âm thanh
      * speakOut : nhận text input và phát âm thanh sau khi onInit thành công
      * onDestroy : activity sẽ bị destroy và sẽ hủy lươn tiến trình của text to speech
-     * */
+     */
     //init text to speech
     @Override
     public void onInit(int status) {
@@ -237,4 +262,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         super.onDestroy();
     }
+
+
+
+    // luồng dịch
+    class TranslatorTask extends AsyncTask<Void, Void, Void> {
+
+        //start luồng
+        @Override
+        protected void onPreExecute() {
+            progress = ProgressDialog.show(MainActivity.this, null, "Đợi đang dịch....");
+            progress.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progress.setIndeterminate(true);
+            super.onPreExecute();
+        }
+
+
+        //tiến trình xử lý luồng
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+        //xử lý luông cho translate
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+                translator = new Translator(MyConstants.CLOUD_API_KEY);
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+        //kết thúc luồng
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            progress.dismiss();
+            super.onPostExecute(aVoid);
+            translated();
+        }
+    }
+
+    /*
+    * SPIN1_SPIN2 lằ hằng số để đánh dấu trạng thái đang là ngôn ngữ nào sang ngôn ngữ nào
+    * 1 là vn-en
+    * 2 là en-vn
+    * */
+    private int getStatusFromVaTo() {
+        if (spFrom.getSelectedItem().toString().equals("Việt Nam") && spTo.getSelectedItem().toString().equals("English")) {
+            SPIN1_SPIN2 = 1;//
+        } else if (spFrom.getSelectedItem().toString().equals("English") && spTo.getSelectedItem().toString().equals("Việt Nam")) {
+            SPIN1_SPIN2 = 2;
+        }
+        return SPIN1_SPIN2;
+    }
+
+    public void translated() {
+        String text = null;
+        switch (getStatusFromVaTo()) {
+            case 1:
+                text = translator.Translating(edtInput.getText().toString(), "vi", "en");
+                break;
+            case 2:
+                text = translator.Translating(edtInput.getText().toString(), "en", "vi");
+                break;
+
+        }
+        txtOutput.setText(edtInput.getText().toString() +" : "+text);
+    }
+
 }
