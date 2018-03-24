@@ -12,6 +12,7 @@ import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -54,7 +55,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btnTranslate;
     private EditText edtInput;
     private TextView txtOutput;
-    private ArrayList<String> listLanguage;
+    private ArrayList<String> listLanguage1;
+    private ArrayList<String> listLanguage2;
     private TextToSpeech tts;
     private Translator translator;
     private ProgressDialog progress;
@@ -70,11 +72,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void events() {
+        /*
+        *
+        * event click
+        *
+        * */
         btnSwitch.setOnClickListener(this);
         btnRecord.setOnClickListener(this);
         btnHearingInput.setOnClickListener(this);
         btnTranslate.setOnClickListener(this);
 
+        /*
+        *
+        * event spiner
+        * spFrom 2 spTo  || spTo 2 spFrom
+        *
+        * */
+
+
+
+
+        spFrom.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                    spTo.setSelection(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        spTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    spFrom.setSelection(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
     }
 
     private void init() {
@@ -95,14 +136,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tts.setLanguage(new Locale("vi", "VN"));
 
         //khởi tạo giá trị cần thiết
-        listLanguage = new ArrayList<>();
-        listLanguage.add("Việt Nam");
-        listLanguage.add("English");
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, listLanguage);
-        adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
-        spFrom.setAdapter(adapter);
-        spTo.setAdapter(adapter);
-        spTo.setSelection(listLanguage.size() - 1);
+        listLanguage1 = new ArrayList<>();
+        listLanguage1.add("Việt Nam");
+        listLanguage1.add("English");
+        listLanguage2 = new ArrayList<>();
+        listLanguage2.add("English");
+        listLanguage2.add("Việt Nam");
+        ArrayAdapter<String> adapter1 = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, listLanguage1);
+        adapter1.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, R.layout.support_simple_spinner_dropdown_item, listLanguage2);
+        adapter2.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+        spFrom.setAdapter(adapter1);
+        spTo.setAdapter(adapter2);
+//        spTo.setSelection(listLanguage.size() - 1);
 
     }
 
@@ -111,14 +157,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btnSwitch:
+                //lấy text của mỗi spin
                 String textFrom = spFrom.getSelectedItem().toString();
                 String textTo = spTo.getSelectedItem().toString();
 
-                int indexFrom = listLanguage.indexOf(textFrom);
-                int indexTo = listLanguage.indexOf(textTo);
+                //tìm text của spin 1 là index mấy bên spin2 và ngược lại
+                int indexFrom = listLanguage1.indexOf(textTo);
+                int indexTo = listLanguage2.indexOf(textFrom);
 
-                spFrom.setSelection(indexTo);
-                spTo.setSelection(indexFrom);
+                //setIndex
+                spFrom.setSelection(indexFrom);
+                spTo.setSelection(indexTo);
 
                 break;
             case R.id.btnRecord:
