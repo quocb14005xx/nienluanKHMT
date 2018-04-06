@@ -21,25 +21,26 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.speech.v1.RecognitionAudio;
-import com.google.cloud.speech.v1.RecognitionConfig;
-import com.google.cloud.speech.v1.RecognizeResponse;
-import com.google.cloud.speech.v1.SpeechClient;
-import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
-import com.google.cloud.speech.v1.SpeechRecognitionResult;
-import com.google.cloud.speech.v1.SpeechSettings;
+
 import com.google.protobuf.ByteString;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import nienluannganh.quocb14005xx.nienluannganhkhmt.R;
 import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.MyConstants;
@@ -73,30 +74,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void events() {
         /*
-        *
-        * event click
-        *
-        * */
+         *
+         * event click
+         *
+         * */
         btnSwitch.setOnClickListener(this);
         btnRecord.setOnClickListener(this);
         btnHearingInput.setOnClickListener(this);
         btnTranslate.setOnClickListener(this);
+        btnHearingOutput.setOnClickListener(this);
 
         /*
-        *
-        * event spiner
-        * spFrom 2 spTo  || spTo 2 spFrom
-        *
-        * */
-
-
+         *
+         * event spiner
+         * spFrom 2 spTo  || spTo 2 spFrom
+         *
+         * */
 
 
         spFrom.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
-                    spTo.setSelection(position);
+                spTo.setSelection(position);
             }
 
             @Override
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         spTo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    spFrom.setSelection(position);
+                spFrom.setSelection(position);
             }
 
             @Override
@@ -171,17 +171,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.btnRecord:
-                promptSpeechInput();
+                // promptSpeechInput();
 
-//                try {
-//                    syncRecognizeFile(MyConstants.LINK_TEST_LOCAL_FILE);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
 
                 break;
             case R.id.btnHearingInput:
-                speakOut();
+                speakOut(edtInput.getText().toString());
+                break;
+            case R.id.btnHearingOutput:
+                String temp[] =txtOutput.getText().toString().split("===>");
+                Toast.makeText(this, temp[1], Toast.LENGTH_SHORT).show();
+                speakOut(temp[1]);
                 break;
             case R.id.btnTranslate:
                 new TranslatorTask().execute();
@@ -189,48 +189,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-    public void syncRecognizeFile(String fileName) throws Exception, IOException {
-
-        InputStream resourceAsStream = getResources().openRawResource(R.raw.nienluannganh);
-//        FileInputStream credentialsStream = new FileInputStream("nienluanthnhi-427eee155b1a.json");
-        GoogleCredentials credentials = GoogleCredentials.fromStream(resourceAsStream);
-        FixedCredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
-        SpeechSettings speechSettings =
-                SpeechSettings.newBuilder()
-                        .setCredentialsProvider(credentialsProvider)
-                        .build();
-
-        //xac thuc tai đây
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-        SpeechClient speech = SpeechClient.create(speechSettings);
-
-        @SuppressLint({"NewApi", "LocalSuppress"}) Path path = Paths.get(fileName);
-        @SuppressLint({"NewApi", "LocalSuppress"}) byte[] data = Files.readAllBytes(path);
-        ByteString audioBytes = ByteString.copyFrom(data);
-
-        // Configure request with local raw PCM audio
-        RecognitionConfig config = RecognitionConfig.newBuilder()
-                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                .setLanguageCode("en-US")
-                .setSampleRateHertz(16000)
-                .build();
-        RecognitionAudio audio = RecognitionAudio.newBuilder()
-                .setContent(audioBytes)
-                .build();
-        // Use blocking call to get audio transcript
-        RecognizeResponse response = speech.recognize(config, audio);
-        List<SpeechRecognitionResult> results = response.getResultsList();
-
-        for (SpeechRecognitionResult result : results) {
-            // There can be several alternative transcripts for a given chunk of speech. Just use the
-            // first (most likely) one here.
-            SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-            Log.e(MyConstants.LOG, alternative.getTranscript());
-        }
-        speech.close();
-    }
+//    public void xuLyRequestSpeech(String url) {
+//        url = "https://speech.googleapis.com/v1/speech:recognize";
+//        RequestQueue requestQueue = Volley.newRequestQueue(this);
+//        JsonArrayRequest stringRequest = new JsonArrayRequest(Request.Method.POST, url, new Response.Listener<JSONArray>() {
+//            @Override
+//            public void onResponse(JSONArray response) {
+//                txtOutput.setText(response.toString());
+//            }
+//        }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                Toast.makeText(MainActivity.this, "Đéo có mạng hay gì đó rồi mà đéo load được json", Toast.LENGTH_SHORT).show();
+//            }
+//        }) {
+//            @Override
+//            protected Map<String, String> getParams() throws AuthFailureError {
+//                Map<String, String> params = new HashMap<>();
+//                params.put("encoding", "LINEAR16");
+//                params.put("sampleRateHertz", "16000");
+//                params.put("languageCode", "vi-VN");
+//                params.put("uri","gs://speech-demo/shwazil_hoful.flac");
+//                return params;
+//            }
+//        };
+//        requestQueue.add(stringRequest);
+//    }
 
 
     //show dialog voice và intent đến action của reconizer
@@ -287,10 +271,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e(MyConstants.LOG, "This Language is not supported");
-            } else {
-                speakOut();
             }
-
         } else {
             Log.e(MyConstants.LOG, "Initilization Failed!");
         }
@@ -298,8 +279,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     //speak text from input
-    private void speakOut() {
-        String text = edtInput.getText().toString();
+    private void speakOut( String text) {
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 
@@ -311,7 +291,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         super.onDestroy();
     }
-
 
 
     // luồng dịch
@@ -332,6 +311,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
         }
+
         //xử lý luông cho translate
         @Override
         protected Void doInBackground(Void... voids) {
@@ -344,6 +324,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             return null;
         }
+
         //kết thúc luồng
         @Override
         protected void onPostExecute(Void aVoid) {
@@ -354,10 +335,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     /*
-    * SPIN1_SPIN2 lằ hằng số để đánh dấu trạng thái đang là ngôn ngữ nào sang ngôn ngữ nào
-    * 1 là vn-en
-    * 2 là en-vn
-    * */
+     * SPIN1_SPIN2 lằ hằng số để đánh dấu trạng thái đang là ngôn ngữ nào sang ngôn ngữ nào
+     * 1 là vn-en
+     * 2 là en-vn
+     * */
     private int getStatusFromVaTo() {
         if (spFrom.getSelectedItem().toString().equals("Việt Nam") && spTo.getSelectedItem().toString().equals("English")) {
             SPIN1_SPIN2 = 1;//
@@ -378,7 +359,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
         }
-        txtOutput.setText(edtInput.getText().toString() +" : "+text);
+        txtOutput.setText(edtInput.getText().toString() + "===>" + text);
     }
 
 }
