@@ -36,6 +36,7 @@
         android:layout_height="wrap_content">
 
         <EditText
+            android:textColor="@color/colorPrimary"
             android:gravity="center"
             android:id="@+id/edtInput"
             android:layout_width="match_parent"
@@ -57,6 +58,12 @@
         android:layout_height="match_parent">
 
         <TextView
+
+            android:textIsSelectable="true"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textSize="16sp"
+            android:textColor="@color/colorAccent"
             android:id="@+id/txtOutput"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

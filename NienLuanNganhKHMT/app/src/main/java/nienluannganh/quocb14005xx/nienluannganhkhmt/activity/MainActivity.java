@@ -28,6 +28,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
+import com.detectlanguage.DetectLanguage;
+import com.detectlanguage.Result;
+import com.detectlanguage.errors.APIError;
 import com.google.api.gax.core.FixedCredentialsProvider;
 
 import com.google.protobuf.ByteString;
@@ -48,7 +51,7 @@ import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.Translator;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextToSpeech.OnInitListener {
     private final int REQ_CODE_SPEECH_INPUT = 100;
-    private static int SPIN1_SPIN2 = 9999;
+    private static int SPIN1_SPIN2 = 1;
 
 
     private Spinner spFrom, spTo;//spiner
@@ -83,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnHearingInput.setOnClickListener(this);
         btnTranslate.setOnClickListener(this);
         btnHearingOutput.setOnClickListener(this);
-
+        btnCopy.setOnClickListener(this);
         /*
          *
          * event spiner
@@ -171,50 +174,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 break;
             case R.id.btnRecord:
-                // promptSpeechInput();
+                promptSpeechInput();
 
 
                 break;
             case R.id.btnHearingInput:
+                if (getStatusFromVaTo() == 1) {
+                    tts.setLanguage(new Locale("vi"));
+                } else {
+                    tts.setLanguage(Locale.US);
+                }
                 speakOut(edtInput.getText().toString());
                 break;
             case R.id.btnHearingOutput:
-                String temp[] =txtOutput.getText().toString().split("===>");
+                if (getStatusFromVaTo() == 1) {
+                    tts.setLanguage(new Locale("vi"));
+                } else {
+                    tts.setLanguage(Locale.US);
+                }
+                String temp[] = txtOutput.getText().toString().split("===>");
                 Toast.makeText(this, temp[1], Toast.LENGTH_SHORT).show();
                 speakOut(temp[1]);
                 break;
             case R.id.btnTranslate:
                 new TranslatorTask().execute();
                 break;
+            case R.id.btnCopy:
+
+                break;
         }
     }
 
-//    public void xuLyRequestSpeech(String url) {
-//        url = "https://speech.googleapis.com/v1/speech:recognize";
-//        RequestQueue requestQueue = Volley.newRequestQueue(this);
-//        JsonArrayRequest stringRequest = new JsonArrayRequest(Request.Method.POST, url, new Response.Listener<JSONArray>() {
-//            @Override
-//            public void onResponse(JSONArray response) {
-//                txtOutput.setText(response.toString());
-//            }
-//        }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                Toast.makeText(MainActivity.this, "Đéo có mạng hay gì đó rồi mà đéo load được json", Toast.LENGTH_SHORT).show();
-//            }
-//        }) {
-//            @Override
-//            protected Map<String, String> getParams() throws AuthFailureError {
-//                Map<String, String> params = new HashMap<>();
-//                params.put("encoding", "LINEAR16");
-//                params.put("sampleRateHertz", "16000");
-//                params.put("languageCode", "vi-VN");
-//                params.put("uri","gs://speech-demo/shwazil_hoful.flac");
-//                return params;
-//            }
-//        };
-//        requestQueue.add(stringRequest);
-//    }
 
 
     //show dialog voice và intent đến action của reconizer
@@ -231,11 +221,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     "Sorry! Your device doesn\\'t support speech input",
                     Toast.LENGTH_SHORT).show();
         }
+
     }
 
     /**
      * onActivityResult
      * callback trả về sau sau khi intent gọi speech regconizer của hệ thống android
+     * lấy kết quả và xử lý lại đoạn text thông qua class Translator
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -246,7 +238,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     ArrayList<String> result = data
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-                    edtInput.setText(result.get(0));
+                    translator = new Translator(MyConstants.CLOUD_API_KEY);
+                    try {
+                        StringBuilder tbt = translator.getDetectedNgonNgu(result.get(0),getStatusFromVaTo());
+                        edtInput.setText(tbt.toString());
+                    } catch (APIError apiError) {
+                        apiError.printStackTrace();
+                    }
                 }
                 break;
             }
@@ -266,7 +264,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
 
-            int result = tts.setLanguage(Locale.US);
+            int result = tts.setLanguage(new Locale("vi"));
 
             if (result == TextToSpeech.LANG_MISSING_DATA
                     || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -279,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     //speak text from input
-    private void speakOut( String text) {
+    private void speakOut(String text) {
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
     }
 

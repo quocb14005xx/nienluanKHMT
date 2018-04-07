@@ -38,6 +38,9 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:11.8.0'
     implementation 'com.google.code.gson:gson:2.2.4'
 
+    //detect ngoon nguwx
+    implementation 'com.detectlanguage:detectlanguage:1.1.0'
+
     //gooogle cloud speech
     implementation 'com.android.volley:volley:1.1.0'
 }
