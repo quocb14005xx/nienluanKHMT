@@ -1,14 +1,16 @@
 package nienluannganh.quocb14005xx.nienluannganhkhmt.activity;
 
-import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -21,29 +23,11 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.Volley;
-import com.detectlanguage.DetectLanguage;
-import com.detectlanguage.Result;
 import com.detectlanguage.errors.APIError;
-import com.google.api.gax.core.FixedCredentialsProvider;
-
-import com.google.protobuf.ByteString;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+
 import java.util.Locale;
-import java.util.Map;
 
 import nienluannganh.quocb14005xx.nienluannganhkhmt.R;
 import nienluannganh.quocb14005xx.nienluannganhkhmt.utils.MyConstants;
@@ -193,11 +177,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     tts.setLanguage(Locale.US);
                 }
                 String temp[] = txtOutput.getText().toString().split("===>");
-                Toast.makeText(this, temp[1], Toast.LENGTH_SHORT).show();
-                speakOut(temp[1]);
+                if (temp[1]!=null)
+                {
+                    Toast.makeText(this, temp[1], Toast.LENGTH_SHORT).show();
+                    speakOut(temp[1]);
+                }
+                else
+                {
+                    Snackbar.make(findViewById(R.id.ln),"Output rỗng ko đọc!",Snackbar.LENGTH_SHORT).show();
+                }
                 break;
             case R.id.btnTranslate:
-                new TranslatorTask().execute();
+                if (edtInput.getText().toString().length()<1)
+                {
+                    Snackbar.make(findViewById(R.id.ln),"Nhập chữ vào input để dịch!",Snackbar.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    if (getTrangThaiWifi())
+                    {
+                        new TranslatorTask().execute();
+                    }
+                    else
+                    {
+                        Snackbar.make(findViewById(R.id.ln),"Vui lòng Kiểm tra wifi mở chưa ?",Snackbar.LENGTH_SHORT).show();
+                    }
+                }
                 break;
             case R.id.btnCopy:
 
@@ -359,5 +364,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         txtOutput.setText(edtInput.getText().toString() + "===>" + text);
     }
-
+    private boolean getTrangThaiWifi()
+    {
+        WifiManager wifi = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+        return wifi.isWifiEnabled();
+    }
 }
