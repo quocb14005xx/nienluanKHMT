@@ -1,5 +1,7 @@
 package nienluannganh.quocb14005xx.nienluannganhkhmt.utils;
 
+import android.util.Log;
+
 import com.detectlanguage.DetectLanguage;
 import com.detectlanguage.Result;
 import com.detectlanguage.errors.APIError;

@@ -52,9 +52,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
         setContentView(R.layout.activity_main);
+        if (!getTrangThaiWifi())
+        {
+            Snackbar.make(findViewById(R.id.ln),"Bạn chưa mở wifi!",Snackbar.LENGTH_SHORT).show();
+        }
         init();
         events();
     }
@@ -72,7 +77,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnHearingOutput.setOnClickListener(this);
         btnCopy.setOnClickListener(this);
         /*
-         *
          * event spiner
          * spFrom 2 spTo  || spTo 2 spFrom
          *
@@ -293,6 +297,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             tts.shutdown();
         }
         super.onDestroy();
+    }
+
+    public void ClickHocPhatAm(View view) {
+        startActivity(new Intent(this,Main2Activity.class));
     }
 
 
