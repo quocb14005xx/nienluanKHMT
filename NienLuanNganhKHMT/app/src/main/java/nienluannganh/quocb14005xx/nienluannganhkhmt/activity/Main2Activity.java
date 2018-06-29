@@ -74,11 +74,26 @@ public class Main2Activity extends AppCompatActivity {
                 {
                     if (!tbt_NgheDuoc.equals(""))
                     {
-                        diem=(int)(chamDiem(tbt_NhanDangXong,edtInput2.getText().toString()));
+                        String []strNhanDangXong=tbt_NhanDangXong.toString().split(" ");
+                        Log.e(MyConstants.LOG, "onClick: strNhandangxong " + String.valueOf(strNhanDangXong.length));
+                        String []abcT=edtInput2.getText().toString().split(" ");
+                        Log.e(MyConstants.LOG, "onClick: length input " + String.valueOf(abcT.length));
+
+                        StringBuilder tbt_NhanDangXongNew = new StringBuilder();
+
+                        for (String arg : strNhanDangXong) {
+                            for (String arg2 : abcT)
+                            {
+                                if(arg.equalsIgnoreCase(arg2))
+                                {
+                                    tbt_NhanDangXongNew.append(arg2+ " ");
+                                }
+                            }
+                        }
+                        Log.e(MyConstants.LOG, "onClick: Cham diem TBT  " + tbt_NhanDangXongNew.toString() );
+                        diem=(int)(chamDiem(tbt_NhanDangXongNew,edtInput2.getText().toString()));
                         if (diem!=0)
                         {
-
-
                             final Timer timer = new Timer();
                             TimerTask timerTask = new TimerTask() {
                                 @Override
@@ -101,7 +116,7 @@ public class Main2Activity extends AppCompatActivity {
                         txtShowDiem.setText("Bạn được "+ diem + "/10 tổng số điểm! ");
                         txtC2.setText(edtInput2.getText().toString()+"");
                         txtC1.setText(tbt_NgheDuoc.toString());
-                        txtCCorrect.setText(tbt_NhanDangXong.toString());
+                        txtCCorrect.setText(tbt_NhanDangXongNew.toString());
                     }
                    else
                     {
@@ -155,7 +170,9 @@ public class Main2Activity extends AppCompatActivity {
                     translator = new Translator(MyConstants.CLOUD_API_KEY);
                     try {
                         tbt_NhanDangXong = translator.getDetectedNgonNgu(result.get(0),ngonngu);
+                        Log.e(MyConstants.LOG, "onActivityResult: " + tbt_NhanDangXong );
                         tbt_NgheDuoc=result.get(0);
+                        txtC1.setText(tbt_NgheDuoc);
                     } catch (APIError apiError) {
                         apiError.printStackTrace();
                     }
