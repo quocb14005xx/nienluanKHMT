@@ -32,7 +32,7 @@ public class Main2Activity extends AppCompatActivity {
     private final int REQ_CODE_SPEECH_INPUT = 100;
 
     private Button btnCham;
-    private TextView txtShowDiem,txtC1,txtC2;
+    private TextView txtShowDiem,txtC1,txtC2,txtCCorrect;
     private ProgressBar progressBarShowDiem;
     private EditText edtInput2;
     private Translator translator;
@@ -55,16 +55,26 @@ public class Main2Activity extends AppCompatActivity {
         btnCham.setOnClickListener(onLick);
     }
     private static int i=0;
+    private void refreshInstance()
+    {
+        diem=0;
+        edtInput2.setText("");
+        txtShowDiem.setText("Bạn được "+ diem + "/10 tổng số điểm! ");
+        txtC2.setText("");
+        txtC1.setText("");
+        txtCCorrect.setText("");
+        progressBarShowDiem.setProgress(0);
+    }
     View.OnClickListener onLick = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-                i=0;
-                progressBarShowDiem.setProgress(0);
-                if (!tbt_NhanDangXong.equals("") && !edtInput2.getText().toString().equals("") )//điều kiện phải nhật,phải nói
+            i=0;
+
+            if (!tbt_NhanDangXong.equals("") && !edtInput2.getText().toString().equals("") )//điều kiện phải nhật,phải nói
                 {
                     if (!tbt_NgheDuoc.equals(""))
                     {
-                        diem=(int)(chamDiem(tbt_NgheDuoc,tbt_NhanDangXong)*10);
+                        diem=(int)(chamDiem(tbt_NhanDangXong,edtInput2.getText().toString()));
                         if (diem!=0)
                         {
 
@@ -90,7 +100,8 @@ public class Main2Activity extends AppCompatActivity {
                         }
                         txtShowDiem.setText("Bạn được "+ diem + "/10 tổng số điểm! ");
                         txtC2.setText(edtInput2.getText().toString()+"");
-                        txtC1.setText(tbt_NhanDangXong.toString());
+                        txtC1.setText(tbt_NgheDuoc.toString());
+                        txtCCorrect.setText(tbt_NhanDangXong.toString());
                     }
                    else
                     {
@@ -101,17 +112,18 @@ public class Main2Activity extends AppCompatActivity {
                 {
                     Snackbar.make(findViewById(R.id.ln2),"Đọc giộng nói và nhập đề bài của bạn trước!",Snackbar.LENGTH_SHORT).show();
                 }
+
         }
     };
     /*
     * @speechChuaNhanDan so sánh với speechDaNhanDang xem nói đúng bao nhiu từ theo tiêu chí tiếng việt hay viết anh
     * */
-    private float chamDiem(String speechChuaNhanDang,StringBuilder speechDaNhanDang)
+    private float chamDiem(StringBuilder speechDaNhanDang,String debai)
     {
-        String speechString = speechDaNhanDang.toString();
-        float numWord1=speechChuaNhanDang.split(" ").length;
-        float numWord2=speechString.split(" ").length;
-        float t_diem=numWord2*(numWord1/10);
+        String speechDaNhanDangStr=speechDaNhanDang.toString();
+        float numWord1=speechDaNhanDangStr.split(" ").length;
+        float numWord2=debai.split(" ").length;
+        float t_diem=numWord1/numWord2*10;
         return t_diem;
     }
 
@@ -159,6 +171,7 @@ public class Main2Activity extends AppCompatActivity {
         tbt_NgheDuoc="";
         btnCham=findViewById(R.id.btnChamDiem);
         txtShowDiem=findViewById(R.id.txtShowDiem);
+        txtCCorrect=findViewById(R.id.txtContentCorrect);
         txtC1=findViewById(R.id.txtContent1);
         txtC2=findViewById(R.id.txtContent2);
         progressBarShowDiem=findViewById(R.id.progressShowDiem);

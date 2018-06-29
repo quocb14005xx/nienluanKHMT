@@ -209,7 +209,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btnCopy:
+                finish();
+                overridePendingTransition( 0, 0);
 
+                startActivity(getIntent());
+                overridePendingTransition( 0, 0);
                 break;
         }
     }
